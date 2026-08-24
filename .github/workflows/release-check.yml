@@ -1,0 +1,30 @@
+name: Release check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-check:
+    name: Release build verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deployment compose
+        run: |
+          cp .env.deploy.example .env.deploy
+          docker compose --env-file .env.deploy -f docker-compose.deploy.yml config >/dev/null
+
+      - name: Build migration image
+        run: docker build -f backend/Migration.Dockerfile -t netsera-migrate:release .
+
+      - name: Build backend image
+        run: docker build -f backend/src/Netsera.Api/Dockerfile -t netsera-backend:release .
+
+      - name: Build frontend image
+        run: docker build -f frontend/Dockerfile --build-arg NEXT_PUBLIC_API_BASE_URL=/api -t netsera-frontend:release .

@@ -1,0 +1,42 @@
+PHASE 10 APPLY — PRODUCTION DEPLOYMENT
+
+1. Merge this ZIP into the existing netsera-website root.
+
+2. Add to ROOT .gitignore:
+   .env.deploy
+   backups/
+
+3. No new EF migration is required.
+
+4. From the repository root:
+
+   Copy-Item .env.deploy.example .env.deploy
+
+   docker compose --env-file .env.deploy -f docker-compose.deploy.yml config
+
+   docker build -f backend/Migration.Dockerfile -t netsera-migrate:test .
+   docker build -f backend/src/Netsera.Api/Dockerfile -t netsera-backend:test .
+   docker build -f frontend/Dockerfile --build-arg NEXT_PUBLIC_API_BASE_URL=/api -t netsera-frontend:test .
+
+5. Do NOT attempt public TLS locally unless DOMAIN points to a reachable public server.
+
+6. Remove the local placeholder deployment env:
+   Remove-Item .env.deploy
+
+7. Commit:
+   git add .
+   git status
+   git commit -m "ops: add production deployment, backups and rollback"
+   git push
+
+8. GitHub -> Actions -> Release check -> Run workflow.
+
+9. Release check should be green.
+
+10. Actual go-live requires:
+    - Linux VPS/public server
+    - DNS/domain
+    - real .env.deploy on the VPS
+    - ./scripts/deploy.sh
+
+See docs/phase-10-production-deployment.md
