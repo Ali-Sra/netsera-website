@@ -25,6 +25,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-netsera};Username=${POSTGRES_USER:-netsera};Password=${POSTGRES_PASSWORD:-change_me}
       Cors__AllowedOrigins__0: http://localhost:3000
+      AdminBootstrap__Email: ${ADMIN_EMAIL:-}
+      AdminBootstrap__Password: ${ADMIN_INITIAL_PASSWORD:-}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:

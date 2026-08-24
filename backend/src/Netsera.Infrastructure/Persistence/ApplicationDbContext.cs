@@ -10,6 +10,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ServiceItem> Services => Set<ServiceItem>();
+    public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
