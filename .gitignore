@@ -1,0 +1,28 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/coverage/
+
+# .NET
+backend/**/bin/
+backend/**/obj/
+backend/TestResults/
+
+# Docker / local data
+postgres_data/
+
+# Logs
+*.log
+logs/
