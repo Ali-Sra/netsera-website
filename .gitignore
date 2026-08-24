@@ -26,3 +26,5 @@ postgres_data/
 # Logs
 *.log
 logs/
+.env.production
+.env.production.local
