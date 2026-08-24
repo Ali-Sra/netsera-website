@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Netsera.Api.Services;
 using Netsera.Infrastructure.Persistence;
 
 namespace Netsera.Api.Controllers;
@@ -8,7 +9,9 @@ namespace Netsera.Api.Controllers;
 [ApiController]
 [Route("api/admin/messages")]
 [Authorize(Roles = "Admin")]
-public sealed class AdminMessagesController(ApplicationDbContext db) : ControllerBase
+public sealed class AdminMessagesController(
+    ApplicationDbContext db,
+    AuditLogService audit) : ControllerBase
 {
     private static readonly HashSet<string> AllowedStatuses =
         new(StringComparer.OrdinalIgnoreCase)
@@ -76,12 +79,22 @@ public sealed class AdminMessagesController(ApplicationDbContext db) : Controlle
             return NotFound();
         }
 
+        var oldStatus = message.Status;
+
         message.Status = AllowedStatuses
             .Single(x => x.Equals(request.Status, StringComparison.OrdinalIgnoreCase));
 
         message.UpdatedAtUtc = DateTime.UtcNow;
 
         await db.SaveChangesAsync(cancellationToken);
+
+        await audit.WriteAsync(
+            "ContactMessage.StatusChanged",
+            "ContactMessage",
+            message.Id.ToString(),
+            new { from = oldStatus, to = message.Status },
+            cancellationToken: cancellationToken);
+
         return NoContent();
     }
 

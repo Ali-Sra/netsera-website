@@ -1,0 +1,28 @@
+PHASE 8 APPLY — AUTOMATED TESTING
+
+1. Merge this ZIP into the existing netsera-website root.
+   Phase 7 must already be present locally.
+
+2. No EF migration is required.
+
+3. From backend:
+   cd backend
+   dotnet restore
+   dotnet build
+   dotnet test
+
+4. Expected:
+   Build succeeded.
+   Failed: 0
+
+5. Optional coverage:
+   dotnet test --collect:"XPlat Code Coverage"
+
+6. The tests use EF Core InMemory and do NOT modify your Docker PostgreSQL database.
+
+7. If all tests pass:
+   cd ..
+   git status
+   git add .
+   git commit -m "test: add automated API and security test suite"
+   git push

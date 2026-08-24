@@ -1,0 +1,48 @@
+PHASE 7 APPLY — SECURITY HARDENING + AUDIT LOGGING
+
+1. Merge this ZIP into the existing netsera-website root and Replace/Merge files.
+
+2. PostgreSQL should be running:
+   docker compose up -d postgres
+   docker compose ps
+
+3. Create the Phase 7 migration:
+   cd backend
+
+   dotnet ef migrations add AddAuditLogging `
+     --project .\src\Netsera.Infrastructure `
+     --startup-project .\src\Netsera.Api `
+     --output-dir Persistence\Migrations
+
+4. Apply it:
+   dotnet ef database update `
+     --project .\src\Netsera.Infrastructure `
+     --startup-project .\src\Netsera.Api
+
+5. Validate:
+   dotnet build
+
+6. Start backend:
+   $env:ASPNETCORE_ENVIRONMENT="Development"
+   dotnet run --project .\src\Netsera.Api
+
+7. Check:
+   http://localhost:5000/health
+   http://localhost:5000/health/live
+   http://localhost:5000/health/ready
+   http://localhost:5000/swagger
+
+8. Keep frontend running and login to /admin.
+   Change one message status or edit/create one project/service.
+
+9. Inspect audit data:
+   docker exec -it netsera-postgres psql -U netsera -d netsera
+
+   SELECT "ActorEmail", "Action", "EntityType", "EntityId", "Metadata", "CreatedAtUtc"
+   FROM audit_logs
+   ORDER BY "CreatedAtUtc" DESC;
+
+10. Only after tests pass:
+    git add .
+    git commit -m "feat: add security hardening and audit logging"
+    git push

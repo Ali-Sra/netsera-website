@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Netsera.Api.Services;
 using Netsera.Domain.Entities;
 using Netsera.Infrastructure.Persistence;
 
@@ -16,7 +17,8 @@ namespace Netsera.Api.Controllers;
 [Route("api/admin/auth")]
 public sealed class AdminAuthController(
     ApplicationDbContext db,
-    IPasswordHasher<AdminUser> passwordHasher) : ControllerBase
+    IPasswordHasher<AdminUser> passwordHasher,
+    AuditLogService audit) : ControllerBase
 {
     [HttpPost("login")]
     [AllowAnonymous]
@@ -75,17 +77,33 @@ public sealed class AdminAuthController(
                 AllowRefresh = true
             });
 
+        await audit.WriteAsync(
+            "Admin.Login",
+            "AdminUser",
+            user.Id.ToString(),
+            new { result = "Success" },
+            user.Id,
+            user.Email,
+            cancellationToken);
+
         return Ok(new { email = user.Email, role = "Admin" });
     }
 
     [HttpPost("logout")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> Logout(
+        CancellationToken cancellationToken)
     {
         if (!HasAdminRequestHeader())
         {
             return BadRequest(new { message = "Missing admin request header." });
         }
+
+        await audit.WriteAsync(
+            "Admin.Logout",
+            "AdminUser",
+            User.FindFirstValue(ClaimTypes.NameIdentifier),
+            cancellationToken: cancellationToken);
 
         await HttpContext.SignOutAsync(
             CookieAuthenticationDefaults.AuthenticationScheme);

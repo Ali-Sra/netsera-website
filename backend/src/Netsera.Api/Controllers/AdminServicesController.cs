@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Netsera.Api.Services;
 using Netsera.Domain.Entities;
 using Netsera.Infrastructure.Persistence;
 
@@ -11,7 +12,9 @@ namespace Netsera.Api.Controllers;
 [ApiController]
 [Route("api/admin/services")]
 [Authorize(Roles = "Admin")]
-public sealed class AdminServicesController(ApplicationDbContext db) : ControllerBase
+public sealed class AdminServicesController(
+    ApplicationDbContext db,
+    AuditLogService audit) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken cancellationToken)
@@ -30,7 +33,8 @@ public sealed class AdminServicesController(ApplicationDbContext db) : Controlle
         [FromBody] ServiceRequest request,
         CancellationToken cancellationToken)
     {
-        if (!HasAdminRequestHeader()) return BadRequest(new { message = "Missing admin request header." });
+        if (!HasAdminRequestHeader())
+            return BadRequest(new { message = "Missing admin request header." });
 
         var slug = NormalizeSlug(request.Slug, request.Title);
 
@@ -50,6 +54,13 @@ public sealed class AdminServicesController(ApplicationDbContext db) : Controlle
         db.Services.Add(entity);
         await db.SaveChangesAsync(cancellationToken);
 
+        await audit.WriteAsync(
+            "Service.Created",
+            "ServiceItem",
+            entity.Id.ToString(),
+            new { entity.Title, entity.Slug, entity.IsPublished },
+            cancellationToken: cancellationToken);
+
         return CreatedAtAction(nameof(List), new { id = entity.Id }, entity);
     }
 
@@ -59,15 +70,23 @@ public sealed class AdminServicesController(ApplicationDbContext db) : Controlle
         [FromBody] ServiceRequest request,
         CancellationToken cancellationToken)
     {
-        if (!HasAdminRequestHeader()) return BadRequest(new { message = "Missing admin request header." });
+        if (!HasAdminRequestHeader())
+            return BadRequest(new { message = "Missing admin request header." });
 
-        var entity = await db.Services.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (entity is null) return NotFound();
+        var entity = await db.Services
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (entity is null)
+            return NotFound();
 
         var slug = NormalizeSlug(request.Slug, request.Title);
 
-        if (await db.Services.AnyAsync(x => x.Id != id && x.Slug == slug, cancellationToken))
+        if (await db.Services.AnyAsync(
+            x => x.Id != id && x.Slug == slug,
+            cancellationToken))
+        {
             return Conflict(new { message = "Slug already exists." });
+        }
 
         entity.Title = request.Title.Trim();
         entity.Slug = slug;
@@ -78,24 +97,50 @@ public sealed class AdminServicesController(ApplicationDbContext db) : Controlle
         entity.UpdatedAtUtc = DateTime.UtcNow;
 
         await db.SaveChangesAsync(cancellationToken);
+
+        await audit.WriteAsync(
+            "Service.Updated",
+            "ServiceItem",
+            entity.Id.ToString(),
+            new { entity.Title, entity.Slug, entity.IsPublished },
+            cancellationToken: cancellationToken);
+
         return Ok(entity);
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(
+        Guid id,
+        CancellationToken cancellationToken)
     {
-        if (!HasAdminRequestHeader()) return BadRequest(new { message = "Missing admin request header." });
+        if (!HasAdminRequestHeader())
+            return BadRequest(new { message = "Missing admin request header." });
 
-        var entity = await db.Services.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (entity is null) return NotFound();
+        var entity = await db.Services
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (entity is null)
+            return NotFound();
+
+        var title = entity.Title;
+        var slug = entity.Slug;
 
         db.Services.Remove(entity);
         await db.SaveChangesAsync(cancellationToken);
+
+        await audit.WriteAsync(
+            "Service.Deleted",
+            "ServiceItem",
+            entity.Id.ToString(),
+            new { title, slug },
+            cancellationToken: cancellationToken);
+
         return NoContent();
     }
 
     private bool HasAdminRequestHeader() =>
-        Request.Headers.TryGetValue("X-Netsera-Admin", out var value) && value == "1";
+        Request.Headers.TryGetValue("X-Netsera-Admin", out var value)
+        && value == "1";
 
     private static string? Clean(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
@@ -105,7 +150,10 @@ public sealed class AdminServicesController(ApplicationDbContext db) : Controlle
         var value = string.IsNullOrWhiteSpace(slug) ? title : slug;
         value = value.Trim().ToLowerInvariant();
         value = Regex.Replace(value, @"[^a-z0-9]+", "-").Trim('-');
-        return string.IsNullOrWhiteSpace(value) ? Guid.NewGuid().ToString("N") : value;
+
+        return string.IsNullOrWhiteSpace(value)
+            ? Guid.NewGuid().ToString("N")
+            : value;
     }
 }
 
