@@ -1,0 +1,36 @@
+PHASE 6 APPLY — PROJECTS + SERVICES CMS
+
+1. Merge this ZIP into the existing netsera-website root.
+
+2. No EF migration is required.
+
+3. Backend:
+   cd backend
+   dotnet build
+   $env:ASPNETCORE_ENVIRONMENT="Development"
+   dotnet run --project .\src\Netsera.Api
+
+4. Frontend in a new terminal:
+   cd frontend
+   npm run typecheck
+   npm run build
+   npm run dev
+
+5. Open:
+   http://localhost:3000/admin
+
+6. Login if needed, then test:
+   /admin/projects
+   /admin/services
+
+7. Create at least one PUBLISHED service and project.
+
+8. Open:
+   http://localhost:3000
+
+9. Confirm the public Services and Projects sections now display database content.
+
+10. Only after tests pass:
+    git add .
+    git commit -m "feat: add project and service content management"
+    git push
