@@ -1,0 +1,15 @@
+Copy the contents of this package into the root of your existing netsera-website repository and allow files to merge/replace.
+
+Then run:
+
+cd frontend
+npm install
+npm run typecheck
+npm run build
+npm run dev
+
+After checking http://localhost:3000, return to repository root and run:
+
+git add .
+git commit -m "feat: build Netsera frontend foundation"
+git push
