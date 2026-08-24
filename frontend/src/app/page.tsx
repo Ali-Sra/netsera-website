@@ -1,3 +1,4 @@
+import { ContactForm } from "@/components/ContactForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
@@ -59,7 +60,7 @@ export default function Home() {
               ))}
             </div>
             <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-              {[['99.9%', 'Ziel Verfügbarkeit'], ['24/7', 'Monitoring-ready'], ['4', 'Kernbereiche']].map(([value, label]) => (
+              {[["99.9%", "Ziel Verfügbarkeit"], ["24/7", "Monitoring-ready"], ["4", "Kernbereiche"]].map(([value, label]) => (
                 <div key={label} className="rounded-2xl border border-white/10 p-4">
                   <div className="text-lg font-semibold">{value}</div>
                   <div className="mt-1 text-[11px] leading-4 text-slate-500">{label}</div>
@@ -94,7 +95,7 @@ export default function Home() {
             <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Weniger Blackbox. Mehr Kontrolle.</h2>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            {[['01', 'Analyse', 'Ist-Zustand verstehen, Risiken sichtbar machen.'], ['02', 'Planung', 'Zielbild, Prioritäten und saubere Umsetzung.'], ['03', 'Absicherung', 'Least Privilege, MFA, Segmentierung und Backups.'], ['04', 'Dokumentation', 'Konfigurationen und Entscheidungen nachvollziehbar halten.']].map(([n,t,d]) => (
+            {[["01", "Analyse", "Ist-Zustand verstehen, Risiken sichtbar machen."], ["02", "Planung", "Zielbild, Prioritäten und saubere Umsetzung."], ["03", "Absicherung", "Least Privilege, MFA, Segmentierung und Backups."], ["04", "Dokumentation", "Konfigurationen und Entscheidungen nachvollziehbar halten."]].map(([n,t,d]) => (
               <div key={n} className="rounded-2xl border border-white/10 p-5">
                 <span className="text-xs text-slate-500">{n}</span>
                 <h3 className="mt-5 font-semibold">{t}</h3>
@@ -128,17 +129,19 @@ export default function Home() {
 
       <section id="kontakt" className="container-shell pb-24">
         <div className="glass overflow-hidden rounded-3xl p-7 sm:p-10 lg:p-14">
-          <div className="grid gap-10 lg:grid-cols-[1fr_.8fr] lg:items-end">
+          <div className="grid gap-10 lg:grid-cols-[1fr_.8fr] lg:items-start">
             <div>
               <p className="text-sm font-semibold text-emerald-300">Kontakt</p>
               <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight sm:text-5xl">Ihre IT soll sicherer, übersichtlicher oder moderner werden?</h2>
-              <p className="mt-5 max-w-xl leading-7 text-slate-400">Beschreiben Sie kurz Ihr Vorhaben. Im nächsten Backend-Schritt wird dieses Formular an die Netsera API angebunden.</p>
+              <p className="mt-5 max-w-xl leading-7 text-slate-400">
+                Beschreiben Sie kurz Ihr Vorhaben. Ihre Nachricht wird über die Netsera API validiert und in PostgreSQL gespeichert.
+              </p>
+              <div className="mt-7 rounded-2xl border border-white/10 bg-black/10 p-5 text-sm leading-6 text-slate-400">
+                <p className="font-medium text-slate-200">Technischer Ablauf</p>
+                <p className="mt-2">Next.js → ASP.NET Core API → EF Core → PostgreSQL</p>
+              </div>
             </div>
-            <form className="grid gap-3" action="#" method="post">
-              <label className="text-sm text-slate-300">E-Mail<input disabled type="email" placeholder="name@unternehmen.de" className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white placeholder:text-slate-600 disabled:cursor-not-allowed" /></label>
-              <label className="text-sm text-slate-300">Nachricht<textarea disabled rows={4} placeholder="Worum geht es?" className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white placeholder:text-slate-600 disabled:cursor-not-allowed" /></label>
-              <button disabled type="submit" className="rounded-xl bg-white/40 px-5 py-3 text-sm font-semibold text-slate-800 disabled:cursor-not-allowed">Backend folgt in Phase 3</button>
-            </form>
+            <ContactForm />
           </div>
         </div>
       </section>
