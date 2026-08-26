@@ -1,0 +1,39 @@
+NETSERA CINEMATIC UI REDESIGN
+
+This patch was designed against the current main-branch frontend structure.
+
+What it changes:
+- public homepage only
+- SiteHeader / SiteFooter
+- PublicServicesSection
+- PublicProjectsSection
+- global public visual system
+- adds HeroMachine, ComplexityDiagram, WorkflowRail, InfrastructureDashboard
+
+What it does NOT change:
+- backend
+- API contracts
+- ContactForm submission logic
+- admin routes/components
+- Docker/CI config
+- package.json / dependencies
+
+Apply:
+1. Extract into the existing netsera-website root and replace matching frontend files.
+2. From frontend:
+   npm run typecheck
+   npm run build
+   npm run dev
+
+Suggested commit:
+git add frontend/src
+git commit -m "feat: redesign public Netsera experience"
+git push
+
+Animation architecture:
+- no GIF/video
+- no new JS animation library
+- SVG + CSS keyframes for robot brain/data pipeline
+- CSS-only status pulses, terminal data, topology flows
+- CSS view-timeline progressive enhancement for workflow line
+- prefers-reduced-motion supported

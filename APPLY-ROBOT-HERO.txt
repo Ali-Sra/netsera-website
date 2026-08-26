@@ -1,0 +1,40 @@
+NETSERA — ROBOT HERO MOTION PATCH
+
+This patch uses the user's preferred photoreal robot image and adds lightweight motion with CSS/SVG overlays.
+
+Files:
+- frontend/public/hero/netsera-robot-data-center.png  (new)
+- frontend/src/components/HeroRobotScene.tsx          (new)
+- frontend/src/app/page.tsx                          (replace)
+- frontend/src/app/globals.css                       (replace)
+- frontend/Dockerfile                                (replace; public/ copied again because public now exists)
+
+Preserved:
+- backend/API
+- ContactForm behavior
+- admin routes
+- project/service API fetching
+- Docker standalone deployment model
+
+Motion:
+- slow cinematic image parallax/breathing
+- binary 0/1 stream from top toward robot brain
+- pulsing brain node
+- animated data paths from brain -> arm -> workstation
+- data packets
+- monitor status overlay
+- scanline
+- prefers-reduced-motion support
+- lighter/simpler on mobile
+
+Apply:
+1. Extract into the ROOT of the existing netsera-website folder and replace matching files.
+2. Run from frontend:
+   npm run typecheck
+   npm run build
+   npm run dev
+3. Open http://localhost:3000
+4. If the visual is correct, commit:
+   git add frontend
+   git commit -m "feat: add cinematic animated robot hero"
+   git push

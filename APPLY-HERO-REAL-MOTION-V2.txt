@@ -1,0 +1,31 @@
+NETSERA HERO REAL MOTION V2
+
+This version fixes the previous two problems:
+1) the hero layout is balanced again (text and image aligned vertically)
+2) the 0/1 digits REALLY MOVE every frame via HTML Canvas + requestAnimationFrame
+
+Animation path:
+- wide curtain of 0/1 enters from top
+- funnels into robot brain
+- continues from brain through torso/arm
+- travels to workstation
+- continues toward screen
+- luminous packets move continuously on the same route
+
+No GIF is used.
+No animation library is required.
+Canvas particle count: ~520 on desktop.
+The image itself also has slow cinematic motion.
+
+Apply to the ROOT netsera-website folder and replace matching files.
+
+Then:
+cd frontend
+npm run typecheck
+npm run build
+npm run dev
+
+Open:
+http://localhost:3000
+
+Do not push until visually checked.
