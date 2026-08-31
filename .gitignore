@@ -76,3 +76,8 @@ backups/
 # ==============================
 *.log
 logs/
+# Development helper / temporary files
+/APPLY-*.ps1
+/APPLY-*.txt
+*.phase6-backup
+*.phase*-backup
