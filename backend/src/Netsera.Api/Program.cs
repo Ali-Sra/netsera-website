@@ -50,11 +50,13 @@ builder.Services
             : CookieSecurePolicy.Always;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
+
         options.Events.OnRedirectToLogin = context =>
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             return Task.CompletedTask;
         };
+
         options.Events.OnRedirectToAccessDenied = context =>
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
@@ -89,7 +91,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+        var origins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>()
             ?? ["http://localhost:3000"];
 
         policy.WithOrigins(origins)
@@ -138,6 +142,19 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 
 app.MapHealthChecks("/health");
 
+// Apply pending EF Core migrations before accessing database tables.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    app.Logger.LogInformation("Applying database migrations...");
+
+    await db.Database.MigrateAsync();
+
+    app.Logger.LogInformation("Database migrations completed.");
+}
+
+// Create the initial admin account after the database schema exists.
 await AdminBootstrapper.SeedAsync(
     app.Services,
     app.Configuration,
