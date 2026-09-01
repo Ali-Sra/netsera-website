@@ -144,9 +144,9 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 
 app.MapHealthChecks("/health");
 
-// Apply EF Core migrations only when using a relational database.
-// Production uses PostgreSQL, while automated tests may use an
-// in-memory provider that does not support MigrateAsync().
+// Prepare database schema before the application starts.
+// Production uses PostgreSQL and EF Core migrations.
+// Automated tests may replace PostgreSQL with an in-memory provider.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -162,7 +162,12 @@ using (var scope = app.Services.CreateScope())
     else
     {
         app.Logger.LogInformation(
-            "Skipping database migrations because the active provider is not relational.");
+            "Creating database schema for non-relational provider...");
+
+        await db.Database.EnsureCreatedAsync();
+
+        app.Logger.LogInformation(
+            "Database schema created for non-relational provider.");
     }
 }
 
