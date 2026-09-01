@@ -175,18 +175,16 @@ app.MapHealthChecks("/health");
 // Database initialization
 // ------------------------------------------------------------
 //
-// Production uses PostgreSQL, which is a relational database.
-// Therefore pending EF Core migrations must be applied.
+// PostgreSQL in production is relational, so migrations are applied.
 //
-// Integration tests replace PostgreSQL with EF Core InMemory.
-// MigrateAsync() cannot be used with the InMemory provider,
-// so EnsureCreatedAsync() is used for non-relational providers.
+// Integration tests use EF Core InMemory. MigrateAsync() cannot
+// run against a non-relational provider, so EnsureCreatedAsync()
+// is used instead.
 //
 using (var scope = app.Services.CreateScope())
 {
-    var db =
-        scope.ServiceProvider
-            .GetRequiredService<ApplicationDbContext>();
+    var db = scope.ServiceProvider
+        .GetRequiredService<ApplicationDbContext>();
 
     if (db.Database.IsRelational())
     {
@@ -201,12 +199,12 @@ using (var scope = app.Services.CreateScope())
     else
     {
         app.Logger.LogInformation(
-            "Non-relational database provider detected. Creating database schema...");
+            "Non-relational database provider detected.");
 
         await db.Database.EnsureCreatedAsync();
 
         app.Logger.LogInformation(
-            "Database schema created.");
+            "Database schema created for test provider.");
     }
 }
 
@@ -214,10 +212,7 @@ using (var scope = app.Services.CreateScope())
 // ------------------------------------------------------------
 // Initial administrator
 // ------------------------------------------------------------
-//
-// Seed the initial administrator only after the database schema
-// has been prepared.
-//
+
 await AdminBootstrapper.SeedAsync(
     app.Services,
     app.Configuration,
@@ -227,6 +222,5 @@ await AdminBootstrapper.SeedAsync(
 app.Run();
 
 
-// Required by WebApplicationFactory<Program>
-// used in integration tests.
+// Required for integration tests using WebApplicationFactory<Program>.
 public partial class Program;
