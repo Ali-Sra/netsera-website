@@ -22,10 +22,16 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services
     .AddHealthChecks()
-    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
-    .AddCheck<DatabaseHealthCheck>("postgresql", tags: ["ready"]);
+    .AddCheck(
+        "self",
+        () => HealthCheckResult.Healthy(),
+        tags: ["live"])
+    .AddCheck<DatabaseHealthCheck>(
+        "postgresql",
+        tags: ["ready"]);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException(
         "ConnectionStrings:DefaultConnection is not configured.");
 
@@ -46,22 +52,28 @@ builder.Services
         options.Cookie.Name = "netsera_admin";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.None;
-        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-            ? CookieSecurePolicy.SameAsRequest
-            : CookieSecurePolicy.Always;
+
+        options.Cookie.SecurePolicy =
+            builder.Environment.IsDevelopment()
+                ? CookieSecurePolicy.SameAsRequest
+                : CookieSecurePolicy.Always;
 
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
 
         options.Events.OnRedirectToLogin = context =>
         {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.StatusCode =
+                StatusCodes.Status401Unauthorized;
+
             return Task.CompletedTask;
         };
 
         options.Events.OnRedirectToAccessDenied = context =>
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.StatusCode =
+                StatusCodes.Status403Forbidden;
+
             return Task.CompletedTask;
         };
     });
@@ -86,7 +98,8 @@ builder.Services.AddRateLimiter(options =>
         limiter.AutoReplenishment = true;
     });
 
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.RejectionStatusCode =
+        StatusCodes.Status429TooManyRequests;
 });
 
 builder.Services.AddCors(options =>
@@ -98,7 +111,8 @@ builder.Services.AddCors(options =>
             .Get<string[]>()
             ?? ["http://localhost:3000"];
 
-        policy.WithOrigins(origins)
+        policy
+            .WithOrigins(origins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -115,6 +129,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())
@@ -124,59 +139,94 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<SecurityHeadersMiddleware>();
+
 app.UseHttpsRedirection();
+
 app.UseCors("Frontend");
+
 app.UseRateLimiter();
+
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapHealthChecks("/health/live", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("live")
-});
+app.MapHealthChecks(
+    "/health/live",
+    new HealthCheckOptions
+    {
+        Predicate = check =>
+            check.Tags.Contains("live")
+    });
 
-app.MapHealthChecks("/health/ready", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("ready")
-});
+app.MapHealthChecks(
+    "/health/ready",
+    new HealthCheckOptions
+    {
+        Predicate = check =>
+            check.Tags.Contains("ready")
+    });
 
 app.MapHealthChecks("/health");
 
-// Prepare database schema before the application starts.
-// Production uses PostgreSQL and EF Core migrations.
-// Automated tests may replace PostgreSQL with an in-memory provider.
+
+// ------------------------------------------------------------
+// Database initialization
+// ------------------------------------------------------------
+//
+// Production uses PostgreSQL, which is a relational database.
+// Therefore pending EF Core migrations must be applied.
+//
+// Integration tests replace PostgreSQL with EF Core InMemory.
+// MigrateAsync() cannot be used with the InMemory provider,
+// so EnsureCreatedAsync() is used for non-relational providers.
+//
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var db =
+        scope.ServiceProvider
+            .GetRequiredService<ApplicationDbContext>();
 
     if (db.Database.IsRelational())
     {
-        app.Logger.LogInformation("Applying database migrations...");
+        app.Logger.LogInformation(
+            "Applying database migrations...");
 
         await db.Database.MigrateAsync();
 
-        app.Logger.LogInformation("Database migrations completed.");
+        app.Logger.LogInformation(
+            "Database migrations completed.");
     }
     else
     {
         app.Logger.LogInformation(
-            "Creating database schema for non-relational provider...");
+            "Non-relational database provider detected. Creating database schema...");
 
         await db.Database.EnsureCreatedAsync();
 
         app.Logger.LogInformation(
-            "Database schema created for non-relational provider.");
+            "Database schema created.");
     }
 }
 
-// Create the initial admin account after the database schema exists.
+
+// ------------------------------------------------------------
+// Initial administrator
+// ------------------------------------------------------------
+//
+// Seed the initial administrator only after the database schema
+// has been prepared.
+//
 await AdminBootstrapper.SeedAsync(
     app.Services,
     app.Configuration,
     app.Logger);
 
+
 app.Run();
 
+
+// Required by WebApplicationFactory<Program>
+// used in integration tests.
 public partial class Program;
