@@ -26,7 +26,8 @@ builder.Services
     .AddCheck<DatabaseHealthCheck>("postgresql", tags: ["ready"]);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
+    ?? throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection is not configured.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -143,16 +144,26 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 
 app.MapHealthChecks("/health");
 
-// Apply pending EF Core migrations before accessing database tables.
+// Apply EF Core migrations only when using a relational database.
+// Production uses PostgreSQL, while automated tests may use an
+// in-memory provider that does not support MigrateAsync().
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    app.Logger.LogInformation("Applying database migrations...");
+    if (db.Database.IsRelational())
+    {
+        app.Logger.LogInformation("Applying database migrations...");
 
-    await db.Database.MigrateAsync();
+        await db.Database.MigrateAsync();
 
-    app.Logger.LogInformation("Database migrations completed.");
+        app.Logger.LogInformation("Database migrations completed.");
+    }
+    else
+    {
+        app.Logger.LogInformation(
+            "Skipping database migrations because the active provider is not relational.");
+    }
 }
 
 // Create the initial admin account after the database schema exists.
